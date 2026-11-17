@@ -68,8 +68,13 @@ if (countEntries(gameDir) > CAPS.game_max_files) fail('game/ holds too many file
 if (totalBytes(gameDir) > CAPS.game_max_bytes) fail('game/ is over the 48 MiB cap');
 
 // Start from a clean output directory so a stale file can never leak in.
-rmSync(outDir, { recursive: true, force: true });
+// Never remove outDir itself: in the grader's sandbox it is a mounted
+// volume, and removing a mount point fails with EBUSY. Create it if it
+// does not exist, then remove only its contents.
 mkdirSync(outDir, { recursive: true });
+for (const child of readdirSync(outDir)) {
+  rmSync(join(outDir, child), { recursive: true, force: true });
+}
 cpSync(gameDir, join(outDir, 'game'), { recursive: true });
 cpSync(shotsDir, join(outDir, 'screenshots'), { recursive: true });
 
